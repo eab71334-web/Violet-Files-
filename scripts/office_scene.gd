@@ -84,10 +84,10 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = BG
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
-	env.ambient_light_color = Color(0.22, 0.16, 0.38)
-	env.ambient_light_energy = 0.55
+	env.ambient_light_color = Color(0.3, 0.22, 0.5)
+	env.ambient_light_energy = 1.0
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.glow_enabled = true
+	env.glow_enabled = _quality > 0
 	env.glow_intensity = 0.9
 	env.glow_bloom = 0.15
 	env.glow_hdr_threshold = 0.9
@@ -300,12 +300,12 @@ func _build_lights() -> void:
 	spot.light_energy = 5.0
 	spot.spot_range = 3.5
 	spot.spot_angle = 55.0
-	spot.shadow_enabled = _quality >= 1
+	spot.shadow_enabled = _quality >= 2
 	add_child(spot)
 	spot.look_at_from_position(Vector3(-0.75, 1.2, -1.0), Vector3(-0.2, 0.78, -0.7), Vector3.UP)
 	var fill := OmniLight3D.new()
 	fill.light_color = Color(0.4, 0.45, 0.9)
-	fill.light_energy = 0.3
+	fill.light_energy = 0.7
 	fill.omni_range = 6.0
 	fill.position = Vector3(0.0, 2.7, 0.0)
 	add_child(fill)
@@ -313,9 +313,9 @@ func _build_lights() -> void:
 
 func _build_rain() -> void:
 	var p := GPUParticles3D.new()
-	p.amount = [450, 900, 1600][clampi(_quality, 0, 2)]
+	p.amount = [300, 600, 1200][clampi(_quality, 0, 2)]
 	p.lifetime = 0.7
-	p.preprocess = 1.0
+	p.preprocess = 0.7
 	p.local_coords = false
 	p.position = Vector3(-1.0, 6.0, -6.0)
 	p.visibility_aabb = AABB(Vector3(-9, -11, -4), Vector3(18, 12, 8))

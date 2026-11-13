@@ -45,7 +45,8 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	var t := Time.get_ticks_msec() / 1000.0
-	_title.add_theme_color_override("font_outline_color", Color(UV, 0.55 + 0.3 * sin(t * 2.0)))
+	var k := 0.88 + 0.12 * sin(t * 2.0)
+	_title.self_modulate = Color(k, k, k, 1.0)
 
 
 # ------------------------------------------------------------------ UI build
@@ -88,6 +89,7 @@ func _build_ui() -> void:
 	_title.add_theme_font_size_override("font_size", 96)
 	_title.add_theme_color_override("font_color", GLOW)
 	_title.add_theme_constant_override("outline_size", 14)
+	_title.add_theme_color_override("font_outline_color", Color(UV, 0.7))
 	_column.add_child(_title)
 	_tagline = Label.new()
 	_tagline.add_theme_font_size_override("font_size", 30)
@@ -197,16 +199,16 @@ func _play_intro() -> void:
 	_tagline.modulate.a = 0.0
 	_version.modulate.a = 0.0
 	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tw.tween_property(_fade, "color:a", 0.0, 1.8)
-	tw.tween_property(_office, "intro_offset", 0.0, 3.2)
-	tw.tween_property(_title, "modulate:a", 1.0, 1.2).set_delay(0.8)
-	tw.tween_property(_tagline, "modulate:a", 1.0, 1.0).set_delay(1.4)
-	tw.tween_property(_version, "modulate:a", 1.0, 1.0).set_delay(2.4)
+	tw.tween_property(_fade, "color:a", 0.0, 1.0)
+	tw.tween_property(_office, "intro_offset", 0.0, 2.2)
+	tw.tween_property(_title, "modulate:a", 1.0, 1.2).set_delay(0.4)
+	tw.tween_property(_tagline, "modulate:a", 1.0, 1.0).set_delay(0.7)
+	tw.tween_property(_version, "modulate:a", 1.0, 1.0).set_delay(1.2)
 	var i := 0
 	for id in _btns:
 		var b: Button = _btns[id]
 		b.modulate.a = 0.0
-		tw.tween_property(b, "modulate:a", 1.0, 0.5).set_delay(1.6 + i * 0.12)
+		tw.tween_property(b, "modulate:a", 1.0, 0.5).set_delay(0.8 + i * 0.08)
 		i += 1
 
 
@@ -252,12 +254,21 @@ func _close_panel() -> void:
 	_lan_label = null
 
 
-func _lbl(text: String, size := 32, color := TEXT) -> Label:
+func _lbl(text: String, size := 32, color := TEXT, wrap := true) -> Label:
 	var l := Label.new()
 	l.text = text
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if wrap:
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	return l
+
+
+## Settings-row caption: never wraps (a wrapping label inside a grid collapsed to one letter per line).
+func _row_lbl(text: String) -> Label:
+	var l := _lbl(text, 32, TEXT, false)
+	l.custom_minimum_size = Vector2(300, 0)
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	return l
 
 
@@ -265,7 +276,7 @@ func _choice_btn(text: String, selected: bool, cb: Callable, w := 190) -> Button
 	var b := Button.new()
 	b.text = text
 	b.focus_mode = Control.FOCUS_NONE
-	b.custom_minimum_size = Vector2(w, 72)
+	b.custom_minimum_size = Vector2(w, 64)
 	b.add_theme_font_size_override("font_size", 30)
 	_style_button(b, selected)
 	b.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -292,13 +303,13 @@ func _open_panel(title: String, body: Control) -> void:
 	st.border_color = UV
 	st.set_border_width_all(2)
 	st.set_corner_radius_all(16)
-	st.set_content_margin_all(44)
+	st.set_content_margin_all(36)
 	st.shadow_color = Color(GLOW, 0.3)
 	st.shadow_size = 24
 	pc.add_theme_stylebox_override("panel", st)
 	center.add_child(pc)
 	var vb := VBoxContainer.new()
-	vb.add_theme_constant_override("separation", 26)
+	vb.add_theme_constant_override("separation", 20)
 	pc.add_child(vb)
 	vb.add_child(_lbl(title, 54, GLOW))
 	vb.add_child(HSeparator.new())
@@ -306,7 +317,7 @@ func _open_panel(title: String, body: Control) -> void:
 	var back := Button.new()
 	back.text = Settings.t("رجوع", "Back")
 	back.focus_mode = Control.FOCUS_NONE
-	back.custom_minimum_size = Vector2(0, 80)
+	back.custom_minimum_size = Vector2(0, 68)
 	back.add_theme_font_size_override("font_size", 34)
 	_style_button(back)
 	back.alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -383,29 +394,30 @@ func _open_settings() -> void:
 	var g := GridContainer.new()
 	g.columns = 2
 	g.add_theme_constant_override("h_separation", 40)
-	g.add_theme_constant_override("v_separation", 24)
+	g.add_theme_constant_override("v_separation", 18)
 
-	g.add_child(_lbl(Settings.t("اللغة", "Language")))
+	g.add_child(_row_lbl(Settings.t("اللغة", "Language")))
 	var hl := HBoxContainer.new()
 	hl.add_theme_constant_override("separation", 14)
 	hl.add_child(_choice_btn("العربية", Settings.lang == "ar", _set_lang.bind("ar")))
 	hl.add_child(_choice_btn("English", Settings.lang == "en", _set_lang.bind("en")))
 	g.add_child(hl)
 
-	g.add_child(_lbl(Settings.t("الصوت", "Volume")))
+	g.add_child(_row_lbl(Settings.t("الصوت", "Volume")))
 	var sl := HSlider.new()
 	sl.min_value = 0.0
 	sl.max_value = 1.0
 	sl.step = 0.05
 	sl.value = Settings.volume
 	sl.custom_minimum_size = Vector2(420, 48)
+	sl.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	sl.value_changed.connect(func(v: float):
 		Settings.volume = v
 		Settings.save_settings()
 		AudioServer.set_bus_volume_db(0, linear_to_db(maxf(v, 0.0001))))
 	g.add_child(sl)
 
-	g.add_child(_lbl(Settings.t("الرسوميات", "Graphics")))
+	g.add_child(_row_lbl(Settings.t("الرسوميات", "Graphics")))
 	var hq := HBoxContainer.new()
 	hq.add_theme_constant_override("separation", 14)
 	var qn := [Settings.t("خفيفة", "Low"), Settings.t("متوسطة", "Medium"), Settings.t("عالية", "High")]
@@ -413,7 +425,7 @@ func _open_settings() -> void:
 		hq.add_child(_choice_btn(qn[i], Settings.quality == i, _set_quality.bind(i), 170))
 	g.add_child(hq)
 
-	g.add_child(_lbl(Settings.t("حركة الجوال (جايرو)", "Tilt parallax (gyro)")))
+	g.add_child(_row_lbl(Settings.t("حركة الجوال (جايرو)", "Tilt parallax (gyro)")))
 	var cb := CheckButton.new()
 	cb.button_pressed = Settings.gyro
 	cb.focus_mode = Control.FOCUS_NONE

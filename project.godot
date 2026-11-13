@@ -10,6 +10,8 @@ config/name_localized={
 run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.3", "Mobile")
 config/icon="res://icon.svg"
+boot_splash/bg_color=Color(0.043, 0.039, 0.078, 1)
+boot_splash/show_image=false
 
 [autoload]
 
@@ -32,5 +34,5 @@ sensors/enable_accelerometer=true
 
 renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="mobile"
-anti_aliasing/quality/msaa_3d=1
+anti_aliasing/quality/msaa_3d=0
 textures/vram_compression/import_etc2_astc=true

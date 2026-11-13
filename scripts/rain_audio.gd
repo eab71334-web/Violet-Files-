@@ -2,7 +2,7 @@ extends Node
 ## Procedural ambience (no audio files needed): rain hiss, dark synth pad,
 ## rare distant thunder, plus a UI click blip. Generated live with AudioStreamGenerator.
 
-const RATE := 22050.0
+const RATE := 11025.0
 
 var _player: AudioStreamPlayer
 var _pb: AudioStreamGeneratorPlayback
@@ -46,6 +46,10 @@ func _fill() -> void:
 	if _pb == null:
 		return
 	var n := _pb.get_frames_available()
+	if n <= 0:
+		return
+	var buf := PackedVector2Array()
+	buf.resize(n)
 	for i in range(n):
 		var w := randf() * 2.0 - 1.0
 		_lp += (w - _lp) * 0.35        # rain hiss
@@ -58,8 +62,9 @@ func _fill() -> void:
 		if _p2 > TAU: _p2 -= TAU
 		if _pc > TAU: _pc -= TAU
 		var pad := (sin(_p1) + 0.6 * sin(_p2 + sin(_lfo * 0.3))) * 0.035 * (0.7 + 0.3 * sin(_lfo * 1.2))
-		_thunder *= 0.99996
-		_click *= 0.9993
+		_thunder *= 0.99992
+		_click *= 0.9986
 		var s := _lp * 0.22 + pad + _lp2 * _thunder * 3.0 + sin(_pc) * _click * 0.12
 		s = clampf(s, -1.0, 1.0)
-		_pb.push_frame(Vector2(s, s))
+		buf[i] = Vector2(s, s)
+	_pb.push_buffer(buf)
