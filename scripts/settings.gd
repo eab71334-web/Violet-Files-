@@ -59,7 +59,7 @@ func apply() -> void:
 ## If a Cairo/Tajawal font is dropped into res://fonts/ it is used everywhere.
 func _apply_font() -> void:
 	for f in ["Cairo.ttf", "Tajawal-Bold.ttf", "Cairo-VariableFont.ttf"]:
-		var p := "res://fonts/" + f
+		var p: String = "res://fonts/" + f
 		if ResourceLoader.exists(p):
 			var font = load(p)
 			if font is Font:
