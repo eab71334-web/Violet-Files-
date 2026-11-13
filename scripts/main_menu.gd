@@ -224,26 +224,10 @@ func _on_menu_pressed(id: String) -> void:
 
 
 func _do_continue() -> void:
-	var d := _read_save()
-	var names := [Settings.t("سهل", "Easy"), Settings.t("عادي", "Normal"), Settings.t("صعب", "Hard")]
-	var diff := clampi(int(d.get("difficulty", 1)), 0, 2)
-	_toast(Settings.t("متابعة - الصعوبة: %s - القضايا تُضاف في التحديث القادم",
-		"Continue - difficulty: %s - cases arrive in the next update") % names[diff])
-
-
-func _read_save() -> Dictionary:
-	if not FileAccess.file_exists(Settings.GAME_SAVE_PATH):
-		return {}
-	var d = JSON.parse_string(FileAccess.get_file_as_string(Settings.GAME_SAVE_PATH))
-	return d if d is Dictionary else {}
-
-
-func _write_save() -> void:
-	var f := FileAccess.open(Settings.GAME_SAVE_PATH, FileAccess.WRITE)
-	if f == null:
-		return
-	f.store_string(JSON.stringify({"difficulty": _diff, "case": 0, "time": Time.get_unix_time_from_system()}))
-	f.close()
+	if Game.load_save():
+		get_tree().change_scene_to_file("res://scenes/world.tscn")
+	else:
+		_toast(Settings.t("لا يوجد حفظ", "No save found"))
 
 
 # ------------------------------------------------------------------ panels
@@ -366,11 +350,9 @@ func _set_diff(i: int) -> void:
 
 
 func _start_story() -> void:
-	_write_save()
-	_close_panel()
-	_refresh()
-	_toast(Settings.t("تم إنشاء حفظ جديد - القضايا تُضاف في التحديث القادم",
-		"New save created - cases arrive in the next update"))
+	Game.new_state(_diff)
+	Game.save()
+	get_tree().change_scene_to_file("res://scenes/world.tscn")
 
 
 func _open_solo() -> void:
@@ -384,8 +366,8 @@ func _open_solo() -> void:
 		hb.add_child(_choice_btn(names[i], _diff == i, _set_diff.bind(i), 260))
 	vb.add_child(hb)
 	vb.add_child(_choice_btn(Settings.t("ابدأ القصة", "Start Story"), false, _start_story, 420))
-	vb.add_child(_lbl(Settings.t("هذه نسخة القائمة الرئيسية فقط. القضايا قادمة لاحقًا.",
-		"This build is the main menu only. Cases come later."), 24, Color(TEXT, 0.6)))
+	vb.add_child(_lbl(Settings.t("القضية ١: «تحت الإيجار» - احتيال تأميني. بدء قصة جديدة يمسح الحفظ السابق.",
+		"Case 1: \"Under Rent\" - insurance fraud. Starting a new story replaces the previous save."), 24, Color(TEXT, 0.6)))
 	_open_panel(Settings.t("لعب فردي", "Solo Play"), vb)
 
 

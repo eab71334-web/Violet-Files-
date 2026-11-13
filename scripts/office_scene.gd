@@ -21,6 +21,7 @@ var _neon_level := 1.0
 var intro_offset := 0.0        # camera dolly-in at start (tweened by the menu)
 var _cam_base := Vector3(0.0, 1.5, 1.7)
 var _cam_target := Vector3(-0.25, 1.3, -3.0)
+var interactive := false       # true = walkable game world (collisions, hotspots), no menu camera
 
 
 func _ready() -> void:
@@ -33,6 +34,9 @@ func _ready() -> void:
 	_build_lights()
 	_build_rain()
 	_build_steam()
+	if interactive:
+		_build_world_extras()
+		return
 	camera = Camera3D.new()
 	camera.fov = 58.0
 	camera.current = true
@@ -408,6 +412,8 @@ func _process(delta: float) -> void:
 	_folder_light.light_energy = 1.1 + 0.25 * sin(t * 1.6)
 	_monitor_mat.emission_energy_multiplier = 1.1 + 0.1 * sin(t * 3.0)
 
+	if camera == null:
+		return
 	# camera: slow drift + gyroscope (phone) or mouse (desktop) parallax
 	var par := Vector2.ZERO
 	if Settings.gyro and DisplayServer.is_touchscreen_available():
@@ -425,3 +431,85 @@ func _process(delta: float) -> void:
 	var pos := _cam_base + drift + Vector3(_par_smooth.x * 0.35, -_par_smooth.y * 0.18, intro_offset)
 	var look := _cam_target + drift * 0.3 + Vector3(_par_smooth.x * 0.9, -_par_smooth.y * 0.4, 0.0)
 	camera.look_at_from_position(pos, look, Vector3.UP)
+
+
+# ================================================================ interactive world extras
+func _solid(pos: Vector3, size: Vector3) -> void:
+	var sb := StaticBody3D.new()
+	sb.collision_layer = 1
+	sb.collision_mask = 0
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = size
+	cs.shape = bs
+	sb.add_child(cs)
+	sb.position = pos
+	add_child(sb)
+
+
+## Looks-at-able object: StaticBody3D on layer 2 with meta id + bilingual label.
+func add_hotspot(id: String, pos: Vector3, size: Vector3, ar: String, en: String) -> StaticBody3D:
+	var sb := StaticBody3D.new()
+	sb.collision_layer = 2
+	sb.collision_mask = 0
+	var cs := CollisionShape3D.new()
+	var bs := BoxShape3D.new()
+	bs.size = size
+	cs.shape = bs
+	sb.add_child(cs)
+	sb.position = pos
+	sb.set_meta("id", id)
+	sb.set_meta("label_ar", ar)
+	sb.set_meta("label_en", en)
+	add_child(sb)
+	return sb
+
+
+func _build_world_extras() -> void:
+	var wall_m := _mat(Color(0.14, 0.13, 0.2), 0.95)
+	_box(Vector3(0, 1.5, 2.6), Vector3(6.6, 3.0, 0.1), wall_m)      # front wall
+	# room shell collisions
+	_solid(Vector3(0, 1.5, -3.0), Vector3(6.6, 3.0, 0.3))
+	_solid(Vector3(0, 1.5, 2.6), Vector3(6.6, 3.0, 0.3))
+	_solid(Vector3(-3.25, 1.5, -0.4), Vector3(0.3, 3.0, 6.0))
+	_solid(Vector3(3.25, 1.5, -0.4), Vector3(0.3, 3.0, 6.0))
+	# player's desk + cabinet
+	_solid(Vector3(0.2, 0.39, -0.9), Vector3(3.0, 0.78, 1.0))
+	_solid(Vector3(2.6, 0.65, -2.5), Vector3(0.7, 1.3, 0.6))
+	# Haitham's desk against the right wall, monitor facing the room
+	var wood := _mat(Color(0.2, 0.12, 0.08), 0.5)
+	var metal := _mat(Color(0.08, 0.08, 0.1), 0.35, Color.BLACK, 0.0, 0.7)
+	_box(Vector3(2.8, 0.75, 0.9), Vector3(0.8, 0.06, 1.6), wood)
+	for z in [0.15, 1.65]:
+		_box(Vector3(2.5, 0.36, z), Vector3(0.06, 0.72, 0.06), wood)
+		_box(Vector3(3.1, 0.36, z), Vector3(0.06, 0.72, 0.06), wood)
+	_solid(Vector3(2.8, 0.39, 0.9), Vector3(0.8, 0.78, 1.6))
+	_box(Vector3(3.05, 1.12, 0.9), Vector3(0.04, 0.46, 0.74), metal)
+	var screen := _mat(Color(0.05, 0.03, 0.12), 0.3, UV, 1.0)
+	_box(Vector3(3.025, 1.12, 0.9), Vector3(0.01, 0.4, 0.68), screen)
+	_box(Vector3(3.05, 0.9, 0.9), Vector3(0.04, 0.2, 0.04), metal)
+	_box(Vector3(2.55, 0.8, 0.6), Vector3(0.26, 0.04, 0.4), metal)        # keyboard
+	# chairs
+	var seat := _mat(Color(0.1, 0.1, 0.14), 0.8)
+	_box(Vector3(2.15, 0.45, 0.9), Vector3(0.45, 0.05, 0.45), seat)
+	_box(Vector3(1.94, 0.72, 0.9), Vector3(0.05, 0.5, 0.45), seat)
+	_box(Vector3(0.2, 0.45, -1.9), Vector3(0.45, 0.05, 0.45), seat)       # client chair
+	_box(Vector3(0.2, 0.72, -2.15), Vector3(0.45, 0.5, 0.05), seat)
+	# door in the left wall
+	var door_m := _mat(Color(0.28, 0.17, 0.1), 0.6)
+	_box(Vector3(-3.2, 1.05, 0.6), Vector3(0.08, 2.1, 0.95), door_m)
+	_box(Vector3(-3.14, 1.0, 0.25), Vector3(0.05, 0.1, 0.05), _mat(Color("F2B84B"), 0.3, Color.BLACK, 0.0, 0.8))
+	_box(Vector3(-3.2, 2.15, 0.6), Vector3(0.1, 0.1, 1.05), metal)
+	# warm ceiling lamp so the room is readable while walking
+	var ceil_l := OmniLight3D.new()
+	ceil_l.light_color = Color(1.0, 0.85, 0.65)
+	ceil_l.light_energy = 0.9
+	ceil_l.omni_range = 7.0
+	ceil_l.position = Vector3(0.0, 2.6, 0.9)
+	add_child(ceil_l)
+	# hotspots
+	add_hotspot("folder", Vector3(-0.25, 0.85, -0.55), Vector3(0.55, 0.25, 0.45), "ملف القضية", "Case file")
+	add_hotspot("computer", Vector3(0.95, 1.1, -1.15), Vector3(0.8, 0.7, 0.3), "الكمبيوتر", "Computer")
+	add_hotspot("landline", Vector3(1.45, 0.85, -0.6), Vector3(0.35, 0.25, 0.3), "الهاتف الأرضي", "Landline phone")
+	add_hotspot("door", Vector3(-3.05, 1.05, 0.6), Vector3(0.3, 2.1, 0.95), "الباب", "Door")
+	add_hotspot("board", Vector3(1.7, 1.65, -2.85), Vector3(1.6, 1.05, 0.2), "لوحة التحقيق", "Investigation board")
