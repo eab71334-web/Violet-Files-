@@ -1,0 +1,51 @@
+name: Build iOS IPA (unsigned)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+env:
+  GODOT_VERSION: "4.7.2"
+
+jobs:
+  ios:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Godot + export templates
+        run: |
+          V=${GODOT_VERSION}
+          B=https://github.com/godotengine/godot/releases/download/${V}-stable
+          curl -sL -o godot.zip $B/Godot_v${V}-stable_macos.universal.zip
+          curl -sL -o templates.tpz $B/Godot_v${V}-stable_export_templates.tpz
+          unzip -q godot.zip
+          mkdir -p "$HOME/Library/Application Support/Godot/export_templates/${V}.stable"
+          unzip -q templates.tpz
+          mv templates/* "$HOME/Library/Application Support/Godot/export_templates/${V}.stable/"
+
+      - name: Export Xcode project
+        run: |
+          mkdir -p build/ios
+          GODOT="$PWD/Godot.app/Contents/MacOS/Godot"
+          "$GODOT" --headless --import || true
+          "$GODOT" --headless --export-release "iOS" build/ios/VioletFiles.ipa
+          ls -R build/ios | head -30
+
+      - name: Archive without signing and pack IPA
+        run: |
+          cd build/ios
+          xcodebuild -project VioletFiles.xcodeproj -scheme VioletFiles -configuration Release \
+            -sdk iphoneos -archivePath ../VioletFiles.xcarchive archive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM=""
+          cd ..
+          mkdir -p Payload
+          cp -R VioletFiles.xcarchive/Products/Applications/*.app Payload/
+          zip -qr VioletFiles-unsigned.ipa Payload
+          ls -lh VioletFiles-unsigned.ipa
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VioletFiles-iOS-unsigned
+          path: build/VioletFiles-unsigned.ipa
