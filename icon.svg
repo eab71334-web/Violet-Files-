@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="75%">
+      <stop offset="0" stop-color="#1a1230"/>
+      <stop offset="1" stop-color="#0B0A14"/>
+    </radialGradient>
+    <linearGradient id="beam" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#B66DFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#8A2BE2" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="url(#bg)"/>
+  <!-- violet light cone rising from the folder -->
+  <polygon points="456,640 568,640 800,90 224,90" fill="url(#beam)"/>
+  <!-- translucent fingerprint inside the light -->
+  <g fill="none" stroke="#EDEAF5" stroke-opacity="0.38" stroke-width="9" stroke-linecap="round">
+    <path d="M512 250 C 470 250 440 285 440 330 L 440 400"/>
+    <path d="M512 215 C 450 215 402 265 402 330 L 402 420"/>
+    <path d="M512 285 C 490 285 476 305 476 330 L 476 430"/>
+    <path d="M512 320 C 508 320 508 330 508 336 L 508 440"/>
+    <path d="M512 250 C 554 250 584 285 584 330 L 584 380"/>
+    <path d="M512 215 C 574 215 622 265 622 330 L 622 390"/>
+    <path d="M512 285 C 534 285 548 305 548 330 L 548 420"/>
+  </g>
+  <!-- case folder -->
+  <path d="M264 610 L430 610 L452 584 L752 584 Q760 584 760 592 L760 860 L264 860 Z" fill="#241a40" stroke="#8A2BE2" stroke-width="6"/>
+  <path d="M284 668 L748 668 L772 860 L252 860 Z" fill="#1b1530" stroke="#B66DFF" stroke-width="6" stroke-linejoin="round"/>
+  <rect x="300" y="700" width="170" height="10" rx="5" fill="#B66DFF" fill-opacity="0.5"/>
+  <!-- VF -->
+  <g fill="#EDEAF5">
+    <polygon points="420,886 450,886 474,944 498,886 528,886 490,974 458,974"/>
+    <rect x="562" y="886" width="24" height="88"/>
+    <rect x="562" y="886" width="70" height="22"/>
+    <rect x="562" y="922" width="52" height="18"/>
+  </g>
+</svg>
